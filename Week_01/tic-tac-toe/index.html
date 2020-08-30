@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .cell {
+            width: 100px;
+            height: 100px;
+            border: 1px solid white;
+            background-color: green;
+            display: inline-block;
+            vertical-align: middle;
+            text-align: center;
+            line-height: 100px;
+            font-size: 50px;
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div id="board"></div>
+</body>
+<script>
+    const board = document.getElementById('board')
+
+const pattern = [
+    0, 0, 0,
+    0, 0, 0,
+    0, 0, 0
+]
+
+let color = 1
+
+function show() {
+    board.innerHTML = ''
+
+    for (let i = 0; i < 3; i++) {
+        for (let j = 0; j < 3; j++) {
+            const div = document.createElement('div')
+            div.classList.add('cell')
+            div.innerText = 
+                pattern[i * 3 + j] === 2 ? 'x' :
+                pattern[i * 3 + j] === 1 ? 'o' : ''
+
+            if (pattern[i * 3 + j] === 0) {
+                div.addEventListener('click', useMove.bind(null, i, j))
+            }
+            board.appendChild(div)
+        }
+        board.appendChild(document.createElement('br'))
+    }
+    console.log(bestChoice(pattern, color))
+}
+
+function useMove(i, j) {
+    pattern[i * 3 + j] = color
+    let end;
+    if (end = check(pattern, color)) {
+        const _color = color
+        setTimeout(() => {
+            alert(`${_color === 1 ? 'o' : 'x'}赢了`)
+        }, 0)
+    }
+    color = 3 - color
+    show()
+    if (end) return
+    computerMove()
+}
+
+function computerMove() {
+    const chioce = bestChoice(pattern, color)
+    if (chioce.point) 
+        pattern[chioce.point[0] * 3 + chioce.point[1]] = color
+    if (check(pattern, color)) {
+        const _color = color
+        setTimeout(() => {
+            alert(`${_color === 1 ? 'o' : 'x'}赢了`)
+        }, 0)
+    }
+    color = 3 - color
+    show()
+}
+
+function check(pattern, color) {
+    // 横向三个连线
+    for (let i = 0; i < 3; i++) {
+        let win = true
+        for (let j = 0; j < 3; j++) {
+            if (pattern[i * 3 + j] !== color)
+                win = false
+        }
+        if (win) return win
+    }
+    // 纵向三个连线
+    for (let j = 0; j < 3; j++) {
+        let win = true
+        for (let i = 0; i < 3; i++) {
+            if (pattern[i * 3 + j] !== color)
+                win = false
+        }
+        if (win) return win
+    }
+    // 左上到右下连线
+    {
+        let win = true
+        for (let i = 0; i < 3; i++) {
+            if (pattern[i * 3 + i] !== color) 
+                win = false
+        }
+        if (win) return win
+    }
+    
+    // 右上到左下
+    {
+        let win = true
+        for (let i = 0; i < 3; i++) {
+            if (pattern[i * 3 + 2 - i] !== color) 
+                win = false
+        }
+        if (win) return win
+    }
+    return false
+}
+
+function clone(pattern) {
+    return JSON.parse(JSON.stringify(pattern))
+}
+
+function willWin(pattern, color) {
+    for (let i = 0; i < 3; i++) {
+        for (let j = 0; j < 3; j++) {
+            if (pattern[i * 3 + j]) 
+                continue;
+            const tmp = clone(pattern)
+            tmp[i * 3 + j] = color
+            if (check(tmp, color)) {
+                return [i, j]
+            }
+        }
+    }
+    return null
+}
+
+function bestChoice(pattern, color) {
+    let p;
+    // 如果赢了，就是最好的结果
+    if (p = willWin(pattern, color)) {
+        return {
+            point: p,
+            result: 1
+        }
+    }
+    let result = -2
+    let point = null
+    outer: for (let i = 0; i < 3; i++) {
+        for (let j = 0; j < 3; j++) {
+            if (pattern[i * 3 + j]) 
+                continue;
+            let tmp = clone(pattern)
+            tmp[i * 3 + j] = color
+
+            let r = bestChoice(tmp, 3 - color).result
+
+            if (-r > result) {
+                result = -r
+                point = [i, j]
+            }
+
+            if (result === 1) break outer;
+        }
+    }
+    return {
+        point,
+        // 如果point为0，表示没有点可走了
+        result: point ? result : 0
+    }
+}
+
+show()
+</script>
+</html>
